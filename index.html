@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+  <title>Shopping Cart Vue Js</title>
+  <link rel="stylesheet" href="./index.css">
+</head>
+
+<body class="main_container">
+  <header class="header">
+    <img src="./assets/img/DewisMarket.png" alt="Logo icon" class="logo">
+    <p class="business-name">Dewis Market</p>
+  </header>
+  <main id="app" class="main">
+    <div class="search_main_container">
+      <input type="search" placeholder="Ej: Agua Ciel">
+      <button class="search_button">Buscar</button>
+    </div>
+
+    <div class="products_card_main_container">
+      <div v-for="product in products" class="item_card">
+        <img :src="product.img" alt="Produt img" class="product_img_card">
+        <p class="product_description">{{product.description}}</p>
+        <p class="product_price">$ {{product.price}}</p>
+        <button class="add_cart_button" @click="addToCart(product)">Add to Cart</button>
+      </div>
+    </div>
+
+    <div class="sidebar">
+      <div class="cart_icon_container">
+        <img src="./assets/img/cart.png" alt="Cart icon" class="cart_icon">
+        <p class="cart_title">My Cart</p>
+      </div>
+      <div class="cart_list_container">
+        <div v-for="item in cartList" class="list_cart_item_card">
+          <img :src="item.img" alt="Product img" class="list_cart_item_img">
+          <div class="list_cart_item_info_container">
+            <p class="list_cart_item_description">{{item.description}}</p>
+            <div class="list_cart_item_qty_container">
+              <img src="./assets/img/add.png" alt="Add icon" class="add_remove_icon" @click="addToCart(item)">
+              <p class="list_cart_item_quantity">{{item.quantity}} pz</p>
+              <img src="./assets/img/remove.png" alt="Add icon" class="add_remove_icon" @click="removeFromCart(item)">
+            </div>
+            <p class="list_cart_item_subtotal">$ {{item.subtotal}}</p>
+          </div>
+        </div>
+      </div>
+      <totals v-bind:totals="totals"></totals>
+      <button class="checkout_buton">Checkout</button>
+    </div>
+  </main>
+  <footer class="footer">
+    <p>Dewis Market, all rights reserved, 2021.</p>
+  </footer>
+
+  <script>
+    Vue.component('totals', {
+      props: ['totals'],
+      template: ('<div class="total_container">'+
+        '<div class="total_container_item">'+
+          '<p class="total_container_item_label">Subtotal: </p>'+
+          '<p class="total_container_item_data">${{totals.subtotal}}</p>'+
+        '</div>'+
+        '<div class="total_container_item">'+
+          '<p class="total_container_item_label">IVA: </p>'+
+          '<p class="total_container_item_data">${{(totals.iva).toFixed(2)}}</p>'+
+        '</div>'+
+        '<div class="total_container_item">'+
+          '<p class="total_container_item_label total">Total: </p>'+
+          '<p class="total_container_item_data total">${{(totals.total).toFixed(2)}}</p>'+
+        '</div>'+
+      '</div>')
+    })
+
+    var app = new Vue({
+      el: '#app',
+      data: {
+        products: [
+          {
+            id: 1,
+            img: './assets/img/agua_ciel.jpeg',
+            description: 'Agua Ciel 1 lt',
+            price: 12,
+          },
+          {
+            id: 2,
+            img: './assets/img/agua_skarch.jpg',
+            description: 'Agua Skarch 1.5 lt',
+            price: 10,
+          },
+          {
+            id: 3,
+            img: './assets/img/agua_maxima.jpg',
+            description: 'Agua Máxima 1.5 lt',
+            price: 9,
+          },
+        ],
+        cart: [],
+        cartList: [],
+        totals: {
+          subtotal: 0,
+          iva: 0,
+          total: 0,
+        }
+      },
+      methods: {
+        addToCart: function (product) {
+          const item = this.cart.find((e) => e.id === product.id);
+          let objToAdd;
+          if (item) {
+            const index = this.cart.indexOf(item);
+            objToAdd = {
+              ...item,
+              quantity: item.quantity + 1,
+              subtotal: item.price * (item.quantity + 1),
+            }
+            this.cart[index] = objToAdd;
+            this.cartList = [];
+            this.cartList = this.cart;
+            const subtotal = this.totals.subtotal + item.price;
+            const iva = subtotal * .16;
+            const total = subtotal + iva;
+            this.totals = {
+              subtotal,
+              iva,
+              total
+            };
+          } else {
+            objToAdd = {
+              ...product,
+              quantity: 1,
+              subtotal: product.price,
+            }
+            this.cart.push(objToAdd);
+            this.cartList = [];
+            this.cartList = this.cart;
+            const subtotal = this.totals.subtotal + product.price;
+            const iva = subtotal * .16;
+            const total = subtotal + iva;
+            this.totals = {
+              subtotal,
+              iva,
+              total
+            };
+          }
+        },
+        removeFromCart: function (product) {
+          const item = this.cart.find((e) => e.id === product.id);
+          let objToAdd;
+          const index = this.cart.indexOf(item);
+          if (item.quantity - 1 === 0) {
+            this.cart.splice(index, 1);
+          } else {
+            objToAdd = {
+              ...item,
+              quantity: item.quantity - 1,
+              subtotal: item.price * (item.quantity - 1),
+            }
+            this.cart[index] = objToAdd;
+          }
+          this.cartList = [];
+          this.cartList = this.cart;
+          const subtotal = this.totals.subtotal - item.price;
+          const iva = subtotal * .16;
+          const total = subtotal + iva;
+          this.totals = {
+            subtotal,
+            iva,
+            total
+          };
+        }
+      }
+    })
+  </script>
+</body>
+
+</html>
